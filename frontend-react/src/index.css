@@ -16,10 +16,28 @@ body {
   color: #111827;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Prevent text size adjustment on orientation change (iOS) */
+  -webkit-text-size-adjust: 100%;
+  /* Improve tap targets on mobile */
+  -webkit-tap-highlight-color: rgba(16, 185, 129, 0.1);
 }
 
 html {
   scroll-behavior: smooth;
+  /* Prevent horizontal scroll on mobile */
+  overflow-x: hidden;
+}
+
+/* Mobile-friendly touch targets */
+button, a, input, select, textarea {
+  /* Minimum 44x44px tap target recommended by Apple/Google */
+  min-height: 44px;
+}
+
+/* Disable pull-to-refresh on mobile browsers */
+body {
+  overscroll-behavior-y: contain;
 }
 
 /* Animation delay helpers used with animate-blob */
@@ -30,7 +48,7 @@ html {
   animation-delay: 4s;
 }
 
-/* Scrollbar */
+/* Scrollbar - Desktop */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -44,4 +62,35 @@ html {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #059669;
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 640px) {
+  /* Hide scrollbar on mobile for cleaner look */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  
+  /* Larger text inputs on mobile for better readability */
+  input, textarea, select {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+}
+
+/* Safe area support for notched devices (iPhone X+) */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+}
+
+/* Smooth transitions for responsive elements */
+@media (prefers-reduced-motion: no-preference) {
+  * {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-duration: 150ms;
+    transition-timing-function: ease-in-out;
+  }
 }

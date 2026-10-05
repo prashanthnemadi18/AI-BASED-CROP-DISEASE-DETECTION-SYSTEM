@@ -64,13 +64,25 @@ export default function DetectPage() {
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      // Request camera with mobile-optimized settings
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: 'environment', // Use back camera on mobile
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        } 
+      })
       setCameraActive(true)
+      setError('') // Clear any previous errors
       setTimeout(() => {
-        if (videoRef.current) videoRef.current.srcObject = stream
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream
+          videoRef.current.play() // Ensure video plays on mobile
+        }
       }, 50)
-    } catch {
-      setError('Camera access denied or unavailable.')
+    } catch (err) {
+      console.error('Camera error:', err)
+      setError('Camera access denied or unavailable. Please check your browser permissions.')
     }
   }
 
