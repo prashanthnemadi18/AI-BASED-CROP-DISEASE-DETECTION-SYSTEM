@@ -106,8 +106,26 @@ export default function DetectPage() {
     if (!imageFile) return
     setLoading(true)
     setError('')
+    setResult(null)
     try {
       const raw = await predictDisease(imageFile, city)
+      
+      // Handle new validation statuses
+      if (raw.success === false) {
+        // Image was rejected (unsupported plant, uncertain, or invalid)
+        if (raw.status === 'unsupported') {
+          setError(`❌ ${raw.message || 'Unsupported plant detected. Please upload a Pepper, Potato, or Tomato leaf image.'}`)
+        } else if (raw.status === 'uncertain') {
+          setError(`⚠️ ${raw.message || 'Classification confidence is low. Please upload a clearer image.'}`)
+        } else if (raw.status === 'invalid') {
+          setError(`❌ ${raw.message || 'Invalid image. Please upload a clear leaf image.'}`)
+        } else {
+          setError(raw.message || raw.error || 'Unable to classify the image.')
+        }
+        return
+      }
+      
+      // Success - save and display result
       const record = await savePrediction(raw, previewUrl)
       setResult(record)
     } catch (e) {

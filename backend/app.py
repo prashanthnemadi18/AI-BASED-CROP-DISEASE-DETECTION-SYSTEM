@@ -26,14 +26,16 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
 import database as db
+import config
+import plant_validator
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Model Configuration
-MODEL_PATH = "model/crop_disease_model.h5"
-CLASS_NAMES_PATH = "model/class_names.json"
+MODEL_PATH = config.DISEASE_MODEL_PATH
+CLASS_NAMES_PATH = config.CLASS_NAMES_PATH
 
 model = None
 class_names = []
@@ -276,9 +278,9 @@ def preprocess_image(img_path):
         img = cv2.imread(img_path)
         if img is None:
             raise ValueError(f"Could not read image from {img_path}")
-        img = cv2.resize(img, (128, 128))
+        img = cv2.resize(img, config.IMG_SIZE)
         img = img / 255.0
-        return np.reshape(img, (1, 128, 128, 3))
+        return np.reshape(img, (1, *config.IMG_SIZE, 3))
     except Exception as e:
         logger.error(f"Error preprocessing image: {str(e)}")
         raise
@@ -436,8 +438,12 @@ def health():
     return jsonify({
         "status": "healthy" if db_ok else "degraded",
         "model_loaded": model is not None,
+        "plant_validator_loaded": plant_validator.plant_model is not None,
         "classes": len(class_names),
+        "plant_classes": len(plant_validator.plant_classes),
         "database": "connected" if db_ok else "unreachable",
+        "plant_confidence_threshold": config.PLANT_CONFIDENCE_THRESHOLD,
+        "disease_confidence_threshold": config.DISEASE_CONFIDENCE_THRESHOLD,
     })
 
 
@@ -578,7 +584,13 @@ def update_profile():
 
 @app.route("/api/predict", methods=["POST"])
 def predict():
-    """Predict disease from uploaded image"""
+    """
+    Predict disease from uploaded image with two-stage validation:
+    1. Plant validation (Pepper/Potato/Tomato)
+    2. Disease classification (only for supported plants)
+    """
+    filepath = None
+    
     try:
         if "image" not in request.files:
             logger.warning("No image file provided in request")
@@ -602,20 +614,40 @@ def predict():
             logger.error(f"Error saving file: {str(e)}")
             return jsonify({"error": "Failed to save image"}), 500
 
-        # Predict disease
-        try:
-            disease_label, confidence = predict_disease(filepath)
-        except Exception as e:
-            logger.error(f"Prediction error: {str(e)}")
-            return jsonify({"error": "Failed to process image"}), 500
-        finally:
-            # Cleanup uploaded file
-            try:
-                if os.path.exists(filepath):
-                    os.remove(filepath)
-            except Exception as e:
-                logger.warning(f"Could not delete temp file: {str(e)}")
-
+        # TWO-STAGE VALIDATION PIPELINE
+        logger.info("=" * 60)
+        logger.info("Starting two-stage validation pipeline")
+        logger.info("=" * 60)
+        
+        validation_result = plant_validator.two_stage_validation(
+            filepath, 
+            predict_disease
+        )
+        
+        logger.info(f"Validation result: {validation_result['status']}")
+        logger.info("=" * 60)
+        
+        # Handle different validation outcomes
+        if not validation_result["success"]:
+            # Image was rejected (unsupported plant, low confidence, or invalid)
+            return jsonify({
+                "success": False,
+                "status": validation_result["status"],
+                "plant": validation_result["plant"],
+                "disease": validation_result["disease"],
+                "confidence": validation_result["confidence"],
+                "message": validation_result["message"],
+                "error": validation_result["message"]  # For backward compatibility
+            }), 200  # Return 200 to allow frontend to handle gracefully
+        
+        # Validation passed - get full disease information
+        disease_label = validation_result["disease"]
+        confidence = validation_result["confidence"]
+        plant_name = validation_result["plant"]
+        
+        # Convert confidence back to percentage for response
+        confidence_pct = confidence * 100 if confidence <= 1.0 else confidence
+        
         # Get treatment info
         treatment_info = TREATMENTS.get(disease_label, DEFAULT_TREATMENT)
         
@@ -634,8 +666,11 @@ def predict():
             weather_advice = []
 
         return jsonify({
+            "success": True,
+            "status": "classified",
+            "plant": plant_name,
             "disease": disease_label,
-            "confidence": confidence,
+            "confidence": confidence_pct,
             "severity": treatment_info.get("severity", "Unknown"),
             "description": treatment_info.get("description", ""),
             "symptoms": treatment_info.get("symptoms", ""),
@@ -647,7 +682,20 @@ def predict():
 
     except Exception as e:
         logger.error(f"Unexpected error in predict: {str(e)}")
-        return jsonify({"error": "Internal server error"}), 500
+        return jsonify({
+            "success": False,
+            "error": "Internal server error",
+            "message": str(e)
+        }), 500
+    
+    finally:
+        # Cleanup uploaded file
+        if filepath:
+            try:
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+            except Exception as e:
+                logger.warning(f"Could not delete temp file: {str(e)}")
 
 
 if __name__ == "__main__":
