@@ -12,6 +12,7 @@ import requests
 import numpy as np
 import cv2
 import logging
+from datetime import datetime
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
@@ -28,6 +29,8 @@ load_dotenv(Path(__file__).resolve().parent / ".env")
 import database as db
 import config
 import plant_validator
+from chatbot import FarmingChatbot, QUICK_QUESTIONS
+from voice_assistant import process_voice_input, KANNADA_RESPONSES
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -233,6 +236,9 @@ CORS(app, resources={r"/api/*": {"origins": "*"}})
 app.config["UPLOAD_FOLDER"] = "uploads"
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB max file size
 app.config["JSON_SORT_KEYS"] = False
+
+# Initialize chatbot
+chatbot = FarmingChatbot()
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "jfif"}
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
@@ -696,6 +702,132 @@ def predict():
                     os.remove(filepath)
             except Exception as e:
                 logger.warning(f"Could not delete temp file: {str(e)}")
+
+
+@app.route("/api/chatbot/message", methods=["POST"])
+def chatbot_message():
+    """
+    Handle chatbot conversation
+    Send a message and get AI response with suggestions
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+        message = (data.get("message") or "").strip()
+        
+        if not message:
+            return jsonify({"error": "Message is required"}), 400
+        
+        # Get response from chatbot
+        response = chatbot.get_response(message)
+        
+        return jsonify({
+            "success": True,
+            "message": message,
+            "response": response["answer"],
+            "suggestions": response.get("suggestions", []),
+            "type": response.get("type", "general"),
+            "timestamp": datetime.utcnow().isoformat()
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Chatbot message error: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": "Failed to process message",
+            "message": str(e)
+        }), 500
+
+
+@app.route("/api/chatbot/quick-questions", methods=["GET"])
+def chatbot_quick_questions():
+    """Get predefined quick questions for chatbot"""
+    return jsonify({
+        "success": True,
+        "questions": QUICK_QUESTIONS
+    }), 200
+
+
+@app.route("/api/chatbot/history", methods=["GET"])
+def chatbot_history():
+    """Get conversation history"""
+    try:
+        history = chatbot.get_conversation_history()
+        return jsonify({
+            "success": True,
+            "history": history,
+            "count": len(history)
+        }), 200
+    except Exception as e:
+        logger.error(f"Chatbot history error: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": "Failed to get history"
+        }), 500
+
+
+@app.route("/api/chatbot/clear", methods=["POST"])
+def chatbot_clear():
+    """Clear chatbot conversation history"""
+    try:
+        chatbot.clear_history()
+        return jsonify({
+            "success": True,
+            "message": "Conversation history cleared"
+        }), 200
+    except Exception as e:
+        logger.error(f"Chatbot clear error: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": "Failed to clear history"
+        }), 500
+
+
+@app.route("/api/voice/process", methods=["POST"])
+def voice_process():
+    """
+    Process voice input (text from browser Speech Recognition)
+    and return Kannada response
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+        text = (data.get("text") or "").strip()
+        context = data.get("context", {})
+        
+        if not text:
+            return jsonify({"error": "Text is required"}), 400
+        
+        logger.info(f"Voice query: {text}")
+        
+        # Process with Kannada voice assistant
+        response = process_voice_input(text, context)
+        
+        return jsonify({
+            "success": True,
+            "text": text,
+            "response": response["response"],
+            "language": response.get("language", "kn"),
+            "suggestions": response.get("suggestions", []),
+            "type": response.get("type", "general"),
+            "timestamp": datetime.utcnow().isoformat()
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Voice processing error: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": "Failed to process voice input",
+            "message": str(e)
+        }), 500
+
+
+@app.route("/api/voice/wake-word-response", methods=["GET"])
+def wake_word_response():
+    """Get the wake word welcome response"""
+    return jsonify({
+        "success": True,
+        "response": KANNADA_RESPONSES["greeting"]["welcome"],
+        "language": "kn"
+    }), 200
 
 
 if __name__ == "__main__":

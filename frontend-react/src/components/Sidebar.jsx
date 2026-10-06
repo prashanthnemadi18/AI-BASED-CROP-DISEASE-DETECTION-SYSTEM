@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  LayoutDashboard, ScanSearch, BarChart3, History, User, Settings, LogOut, Leaf, X,
+  LayoutDashboard, ScanSearch, BarChart3, History, User, LogOut, Leaf, X,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 
@@ -11,7 +11,6 @@ export const NAV_ITEMS = [
   { to: '/dashboard/analytics', label: 'Analytics', icon: BarChart3 },
   { to: '/dashboard/history', label: 'Detection History', icon: History },
   { to: '/dashboard/profile', label: 'Profile', icon: User },
-  { to: '/dashboard/settings', label: 'Settings', icon: Settings },
 ]
 
 export default function Sidebar({ open, onClose }) {

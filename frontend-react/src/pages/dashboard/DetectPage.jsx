@@ -140,6 +140,15 @@ export default function DetectPage() {
       // Success - save and display result
       const record = await savePrediction(raw, previewUrl)
       setResult(record)
+      
+      // Save to localStorage for voice assistant context
+      localStorage.setItem('lastPrediction', JSON.stringify({
+        disease: record.disease,
+        crop: record.crop || 'Unknown',
+        confidence: record.confidence,
+        severity: record.severity,
+        timestamp: new Date().toISOString()
+      }))
     } catch (e) {
       setError('Could not reach the AI backend. Make sure it is running (python app.py in the backend folder, port 5000).')
     } finally {

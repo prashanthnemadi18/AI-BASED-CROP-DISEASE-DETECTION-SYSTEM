@@ -10,7 +10,8 @@ import DetectPage from './pages/dashboard/DetectPage'
 import AnalyticsPage from './pages/dashboard/AnalyticsPage'
 import HistoryPage from './pages/dashboard/HistoryPage'
 import ProfilePage from './pages/dashboard/ProfilePage'
-import SettingsPage from './pages/dashboard/SettingsPage'
+import FloatingChatbot from './components/FloatingChatbot'
+import HeyAgriVoiceAssistant from './components/HeyAgriVoiceAssistant'
 
 export default function App() {
   return (
@@ -30,12 +31,17 @@ export default function App() {
               <Route path="analytics" element={<AnalyticsPage />} />
               <Route path="history" element={<HistoryPage />} />
               <Route path="profile" element={<ProfilePage />} />
-              <Route path="settings" element={<SettingsPage />} />
             </Route>
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        
+        {/* Global Floating Chatbot - Available on all pages */}
+        <FloatingChatbot />
+        
+        {/* Hey Agri Kannada Voice Assistant - Available on all pages */}
+        <HeyAgriVoiceAssistant />
       </Router>
     </AppProvider>
   )
