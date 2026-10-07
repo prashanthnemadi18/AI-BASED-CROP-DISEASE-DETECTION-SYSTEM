@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mic, MicOff, X, Minimize2, Maximize2, Volume2, VolumeX, Sparkles, Loader2 } from 'lucide-react'
+import { Mic, X, Minimize2, Maximize2, Volume2, VolumeX, Sparkles, Loader2 } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import axios from 'axios'
 
@@ -32,7 +32,6 @@ export default function HeyAgriVoiceAssistant() {
 
   const recognitionRef = useRef(null)
   const speechSynthesisRef = useRef(null)
-  const wakeWordTimeoutRef = useRef(null)
 
   useEffect(() => {
     // Check browser support
@@ -41,18 +40,35 @@ export default function HeyAgriVoiceAssistant() {
     
     if (!SpeechRecognition || !SpeechSynthesis) {
       setIsSupported(false)
+      setError('ಕ್ಷಮಿಸಿ, ನಿಮ್ಮ browser voice features ಅನ್ನು support ಮಾಡುತ್ತಿಲ್ಲ. Chrome ಅಥವಾ Edge browser ಬಳಸಿ.')
       return
+    }
+
+    // Check and request microphone permission
+    const requestMicrophonePermission = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        stream.getTracks().forEach(track => track.stop()) // Stop immediately after permission granted
+        setPermissionGranted(true)
+        setError('')
+      } catch (err) {
+        console.error('Microphone permission denied:', err)
+        setPermissionGranted(false)
+        setError('Voice Assistant ಬಳಸಲು microphone permission ಅಗತ್ಯವಿದೆ. Browser settings ನಲ್ಲಿ microphone permission ಅನ್ನು Allow ಮಾಡಿ.')
+        setState(STATES.ERROR)
+      }
     }
 
     // Initialize Speech Recognition
     const recognition = new SpeechRecognition()
     recognition.continuous = false
     recognition.interimResults = false
-    recognition.lang = 'kn-IN' // Kannada language
+    recognition.lang = 'en-IN' // Changed to English-India for better compatibility
     recognition.maxAlternatives = 1
 
     recognition.onstart = () => {
       console.log('Speech recognition started')
+      setError('')
     }
 
     recognition.onresult = (event) => {
@@ -63,29 +79,37 @@ export default function HeyAgriVoiceAssistant() {
 
     recognition.onerror = (event) => {
       console.error('Speech recognition error:', event.error)
-      if (event.error === 'not-allowed') {
+      if (event.error === 'not-allowed' || event.error === 'permission-denied') {
         setPermissionGranted(false)
-        setError('Voice Assistant ಬಳಸಲು microphone permission ಅಗತ್ಯವಿದೆ. ದಯವಿಟ್ಟು microphone permission ಅನ್ನು Allow ಮಾಡಿ.')
+        setError('Microphone permission denied. ದಯವಿಟ್ಟು browser settings ನಲ್ಲಿ microphone permission ಅನ್ನು Allow ಮಾಡಿ.')
         setState(STATES.ERROR)
       } else if (event.error === 'no-speech') {
-        if (state === STATES.WAKE_WORD_LISTENING) {
-          // Restart wake word listening
-          startWakeWordListening()
-        } else {
+        // Only show error if not waiting for wake word
+        if (state !== STATES.WAKE_WORD_LISTENING) {
           setError('ಕ್ಷಮಿಸಿ, ನಿಮ್ಮ ಮಾತು ಕೇಳಿಸಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.')
           setState(STATES.ERROR)
           setTimeout(() => {
             setState(STATES.IDLE)
-            if (isOpen) startWakeWordListening()
-          }, 2000)
+            setError('')
+          }, 3000)
+        } else {
+          // Silently restart for wake word listening
+          setTimeout(() => startWakeWordListening(), 500)
         }
-      } else {
-        setError('ಕ್ಷಮಿಸಿ, technical error ಆಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.')
+      } else if (event.error === 'network') {
+        setError('Network error. Internet connection ಪರಿಶೀಲಿಸಿ.')
         setState(STATES.ERROR)
         setTimeout(() => {
           setState(STATES.IDLE)
-          if (isOpen) startWakeWordListening()
-        }, 2000)
+          setError('')
+        }, 3000)
+      } else {
+        setError(`ಕ್ಷಮಿಸಿ, error ಆಗಿದೆ: ${event.error}. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.`)
+        setState(STATES.ERROR)
+        setTimeout(() => {
+          setState(STATES.IDLE)
+          setError('')
+        }, 3000)
       }
     }
 
@@ -95,16 +119,25 @@ export default function HeyAgriVoiceAssistant() {
         // Restart wake word listening
         setTimeout(() => {
           try {
-            recognition.start()
+            if (recognitionRef.current && isOpen) {
+              recognition.start()
+            }
           } catch (e) {
             console.error('Failed to restart recognition:', e)
+            setError('ಮತ್ತೆ start ಮಾಡಲು ಸಾಧ್ಯವಾಗುತ್ತಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.')
+            setState(STATES.ERROR)
           }
-        }, 100)
+        }, 500)
       }
     }
 
     recognitionRef.current = recognition
     speechSynthesisRef.current = window.speechSynthesis
+
+    // Request microphone permission on init
+    if (isOpen) {
+      requestMicrophonePermission()
+    }
 
     return () => {
       stopListening()
@@ -298,7 +331,7 @@ export default function HeyAgriVoiceAssistant() {
     processQuery(suggestion)
   }
 
-  const toggleAssistant = () => {
+  const toggleAssistant = async () => {
     if (isOpen) {
       // Close
       stopListening()
@@ -310,11 +343,21 @@ export default function HeyAgriVoiceAssistant() {
       setSuggestions([])
       setError('')
     } else {
-      // Open
+      // Open and request permission
       setIsOpen(true)
-      if (permissionGranted || isSupported) {
+      
+      // Request microphone permission
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        stream.getTracks().forEach(track => track.stop())
+        setPermissionGranted(true)
+        setError('')
         setState(STATES.IDLE)
-        // Will auto-start wake word listening via useEffect
+      } catch (err) {
+        console.error('Microphone permission error:', err)
+        setPermissionGranted(false)
+        setError('Microphone permission denied. ದಯವಿಟ್ಟು browser address bar ನಲ್ಲಿ 🔒 lock icon ಒತ್ತಿ, Microphone ಅನ್ನು "Allow" ಮಾಡಿ.')
+        setState(STATES.ERROR)
       }
     }
   }
@@ -330,12 +373,33 @@ export default function HeyAgriVoiceAssistant() {
     setIsMuted(!isMuted)
   }
 
-  const manualActivate = () => {
+  const manualActivate = async () => {
     // Allow user to manually activate without saying "Hey Agri"
+    // Check permission first
+    if (!permissionGranted) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        stream.getTracks().forEach(track => track.stop())
+        setPermissionGranted(true)
+      } catch (err) {
+        setError('Microphone permission needed. Browser settings ನಲ್ಲಿ Allow ಮಾಡಿ.')
+        setState(STATES.ERROR)
+        return
+      }
+    }
+
     setState(STATES.LISTENING)
     setTranscript('')
     setResponse('ನಿಮ್ಮ ಪ್ರಶ್ನೆ ಕೇಳುತ್ತಿದ್ದೇನೆ...')
-    recognitionRef.current?.start()
+    setError('')
+    
+    try {
+      recognitionRef.current?.start()
+    } catch (e) {
+      console.error('Failed to start recognition:', e)
+      setError('ಕ್ಷಮಿಸಿ, microphone start ಮಾಡಲು ಸಾಧ್ಯವಾಗುತ್ತಿಲ್ಲ. Page refresh ಮಾಡಿ ಮತ್ತೆ try ಮಾಡಿ.')
+      setState(STATES.ERROR)
+    }
   }
 
   const getStateDisplay = () => {
@@ -570,9 +634,42 @@ export default function HeyAgriVoiceAssistant() {
                         key="error"
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-red-50 border border-red-200 rounded-xl p-4"
+                        className="space-y-4"
                       >
-                        <p className="text-sm text-red-700">{error}</p>
+                        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                          <p className="text-sm text-red-700 mb-3">{error}</p>
+                          
+                          {!permissionGranted && (
+                            <div className="space-y-2">
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+                                    stream.getTracks().forEach(track => track.stop())
+                                    setPermissionGranted(true)
+                                    setError('')
+                                    setState(STATES.IDLE)
+                                  } catch (err) {
+                                    setError('Permission denied. Browser settings ನಲ್ಲಿ manually allow ಮಾಡಿ.')
+                                  }
+                                }}
+                                className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm font-medium"
+                              >
+                                🎤 Allow Microphone
+                              </button>
+                              
+                              <div className="text-xs text-gray-600 bg-white p-3 rounded border border-gray-200">
+                                <p className="font-semibold mb-1">ಹೇಗೆ permission ಕೊಡೋದು:</p>
+                                <ol className="list-decimal ml-4 space-y-1">
+                                  <li>Browser address bar ನಲ್ಲಿ 🔒 lock icon ಒತ್ತಿ</li>
+                                  <li>"Microphone" ಆಯ್ಕೆ ಹುಡುಕಿ</li>
+                                  <li>"Allow" ಆಯ್ಕೆ ಮಾಡಿ</li>
+                                  <li>Page refresh ಮಾಡಿ</li>
+                                </ol>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
