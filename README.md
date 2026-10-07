@@ -1,14 +1,15 @@
 # 🌾 AgroGuard AI - Smart Crop Disease Detection System
 
-AI-powered crop disease detection using CNN with real-time weather integration.
+AI-powered crop disease detection using CNN with intelligent image analysis.
 
-## � Project Overview
+## 📋 Project Overview
 
 Crop diseases are a major challenge in agriculture, causing 20–40% crop loss worldwide every year. AgroGuard AI provides an intelligent solution by combining:
 
 - Deep Learning for plant disease detection
 - Computer Vision for leaf image analysis
-- Weather data analysis for disease risk prediction
+- Voice Assistant (Hey Agri) with Kannada language support
+- Intelligent Chatbot for farming guidance
 
 ## 📁 Project Structure
 
@@ -71,14 +72,6 @@ python -m http.server 8000
 
 Visit `http://localhost:8000`
 
-## 🔑 Weather API (Optional)
-
-Get a free API key from [OpenWeatherMap](https://openweathermap.org/api):
-
-```bash
-export OPENWEATHER_API_KEY=your_key_here
-```
-
 ## 🦠 Supported Diseases
 
 - Pepper Bell: Bacterial Spot, Healthy
@@ -87,11 +80,11 @@ export OPENWEATHER_API_KEY=your_key_here
 
 ## 🛠️ Tech Stack
 
-- Frontend: HTML5, CSS3, Vanilla JavaScript
-- Backend: Flask, TensorFlow/Keras
+- Frontend: React.js with Vite, TailwindCSS, Framer Motion
+- Backend: Flask, TensorFlow/Keras, MongoDB
 - Model: CNN (Convolutional Neural Network) - Production-optimized
 - Dataset: PlantVillage
-- API: OpenWeatherMap for real-time weather data
+- Voice: Web Speech API with Kannada support
 
 ## 📝 API Endpoints
 
@@ -102,9 +95,12 @@ export OPENWEATHER_API_KEY=your_key_here
 
 - 🌿 AI Crop Disease Detection using CNN
 - 📷 Image upload and analysis
-- � Disease prediction with confidence scores
-- 🌦️ Weather-based disease risk analysis
+- 🎯 Disease prediction with confidence scores
 - 💊 Treatment recommendations
+- 🎤 Voice Assistant (Hey Agri) with Kannada support
+- 💬 Intelligent Chatbot for farming guidance
+- 👤 User Authentication and Profile Management
+- 📊 Detection History and Analytics
 - 🔒 Production-ready error handling
 - ⚡ High-traffic support with thread-safe model access
 

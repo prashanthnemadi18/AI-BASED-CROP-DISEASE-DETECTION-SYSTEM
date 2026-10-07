@@ -49,7 +49,7 @@ Many farmers face challenges:
 - **Context-Aware:** Knows what you're doing
 - **Complete Guidance:** Login → Logout help
 - **Disease Information:** In simple Kannada
-- **Weather Integration:** Location-based advice
+- **Treatment Recommendations:** Detailed farming advice
 
 </td>
 </tr>
@@ -171,15 +171,6 @@ Hear Kannada response
 </details>
 
 <details>
-<summary><b>🌤️ Weather & Advice</b></summary>
-
-- Weather ಹೇಗಿದೆ?
-- Temperature ಎಷ್ಟು?
-- Humidity ಬಗ್ಗೆ ಹೇಳಿ
-
-</details>
-
-<details>
 <summary><b>❓ General Help</b></summary>
 
 - ಈ app ಏನು ಮಾಡುತ್ತದೆ?
@@ -209,8 +200,8 @@ Hey Agri: "ನಿಮ್ಮ ಚಿತ್ರದಲ್ಲಿ AI ಗುರುತಿ�
 📱 You're on: Dashboard page
 
 User: "ಇಲ್ಲಿಂದ ಏನು ಮಾಡಬೇಕು?"
-Hey Agri: "Dashboard ನಲ್ಲಿ ನೀವು disease detection, 
-          history ಮತ್ತು weather ನೋಡಬಹುದು..."
+Hey Agri: "Dashboard ನಲ್ಲಿ ನೀವು disease detection ಮತ್ತು 
+          history ನೋಡಬಹುದು..."
 ```
 
 ---

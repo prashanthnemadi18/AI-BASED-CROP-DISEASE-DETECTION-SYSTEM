@@ -73,7 +73,7 @@ The assistant understands and helps with:
 #### Navigation
 - Dashboard overview
 - Prediction history
-- Weather information
+- Treatment recommendations
 - Profile settings
 
 #### Disease Information
@@ -89,7 +89,6 @@ Provides Kannada explanations for:
 The assistant is aware of:
 - Current page/route
 - Last prediction result
-- Current weather data
 - Login status
 
 **Example:**
@@ -252,7 +251,6 @@ Collect Context:
   - currentPage: "/dashboard"
   - isLoggedIn: false
   - prediction: null
-  - weather: null
          ↓
 POST /api/voice/process
   {
@@ -352,7 +350,7 @@ Response: "ನಿಮ್ಮ ಚಿತ್ರದಲ್ಲಿ AI ಗುರುತಿ�
 **Navigation:**
 - "Dashboard ಎಲ್ಲಿದೆ?"
 - "History ಹೇಗೆ ನೋಡೋದು?"
-- "Weather ಹೇಗಿದೆ?"
+- "Profile update ಹೇಗೆ ಮಾಡೋದು?"
 
 **App Information:**
 - "ಈ app ಏನು ಮಾಡುತ್ತದೆ?"
@@ -406,8 +404,7 @@ const getApplicationContext = () => {
   return {
     currentPage: location.pathname,
     isLoggedIn: !!localStorage.getItem('token'),
-    prediction: JSON.parse(localStorage.getItem('lastPrediction')),
-    weather: JSON.parse(localStorage.getItem('currentWeather'))
+    prediction: JSON.parse(localStorage.getItem('lastPrediction'))
   }
 }
 ```
@@ -649,7 +646,6 @@ Get the wake word welcome message.
 ✅ All disease detection features intact  
 ✅ Authentication unchanged  
 ✅ Database operations unchanged  
-✅ Weather API unchanged  
 
 ### New Additions:
 ✅ Voice assistant component  

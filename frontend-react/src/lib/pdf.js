@@ -56,11 +56,5 @@ export function downloadReport(rec) {
     rec.prevention.forEach((t) => wrap(`- ${t}`))
   }
 
-  if (rec.weather?.city) {
-    section('Weather')
-    wrap(`Location: ${rec.weather.city}`)
-    wrap(`Temperature: ${rec.weather.temperature} C  |  Humidity: ${rec.weather.humidity}%  |  Wind: ${rec.weather.wind_speed} m/s`)
-  }
-
   doc.save(`AgroGuard_Report_${(rec.disease || 'scan')}_${new Date(rec.timestamp).toISOString().slice(0, 10)}.pdf`)
 }

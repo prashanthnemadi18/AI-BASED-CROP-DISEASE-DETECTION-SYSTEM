@@ -1,20 +1,18 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Upload, Camera, ScanSearch, MapPin, Download, Trash2, X, Loader2, AlertTriangle, Droplets, Thermometer, Snowflake, CheckCircle2 } from 'lucide-react'
+import { Upload, Camera, ScanSearch, Download, Trash2, X, Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { predictDisease } from '../../lib/api'
 import { downloadReport } from '../../lib/pdf'
 import PredictionCard from '../../components/PredictionCard'
-import WeatherCard from '../../components/WeatherCard'
 
 const ALLOWED = ['png', 'jpg', 'jpeg', 'webp']
 
 export default function DetectPage() {
-  const { savePrediction, settings } = useApp()
+  const { savePrediction } = useApp()
 
   const [imageFile, setImageFile] = useState(null)
   const [previewUrl, setPreviewUrl] = useState(null)
-  const [city, setCity] = useState(settings.defaultCity || 'New Delhi')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState(null)
@@ -23,20 +21,6 @@ export default function DetectPage() {
   const fileInputRef = useRef(null)
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
-
-  // Auto-detect city via geolocation once
-  useEffect(() => {
-    if (!navigator.geolocation) return
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-      try {
-        const { latitude, longitude } = pos.coords
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
-        const data = await res.json()
-        const name = data.address?.city || data.address?.town || data.address?.village
-        if (name) setCity(name)
-      } catch { /* keep default city */ }
-    }, () => { /* ignore */ })
-  }, [])
 
   useEffect(() => () => stopCamera(), []) // cleanup stream on unmount
 
@@ -120,7 +104,7 @@ export default function DetectPage() {
     setError('')
     setResult(null)
     try {
-      const raw = await predictDisease(imageFile, city)
+      const raw = await predictDisease(imageFile)
       
       // Handle new validation statuses
       if (raw.success === false) {
@@ -221,21 +205,6 @@ export default function DetectPage() {
             )}
           </AnimatePresence>
 
-          {/* Location */}
-          <div className="mt-5">
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Location (for weather &amp; risk)</label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                placeholder="Enter city name"
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-            </div>
-          </div>
-
           {/* Analyze button */}
           <button
             onClick={handleAnalyze}
@@ -274,20 +243,6 @@ export default function DetectPage() {
         {result && (
           <>
             <PredictionCard prediction={result} />
-            {result.weather?.city && <WeatherCard weather={result.weather} />}
-            {result.weatherAdvice?.length > 0 && (
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
-                <p className="font-semibold text-amber-800 mb-2 flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> Weather Advice</p>
-                <ul className="space-y-1.5 text-sm text-amber-900">
-                  {result.weatherAdvice.map((a, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <AdviceIcon text={a} />
-                      <span>{a}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
             <div className="flex gap-3">
               <button onClick={() => downloadReport(result)} className="flex-1 flex items-center justify-center gap-2 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition">
                 <Download className="w-5 h-5" /> Report
@@ -303,13 +258,4 @@ export default function DetectPage() {
   )
 }
 
-/** Pick a contextual icon for a weather-advice line (replaces emoji prefixes). */
-function AdviceIcon({ text }) {
-  const t = (text || '').toLowerCase()
-  const cls = 'w-4 h-4 shrink-0 mt-0.5'
-  if (t.includes('humid')) return <Droplets className={cls} />
-  if (t.includes('cold')) return <Snowflake className={cls} />
-  if (t.includes('temperature') || t.includes('irrigation')) return <Thermometer className={cls} />
-  if (t.includes('favorable')) return <CheckCircle2 className={cls} />
-  return <AlertTriangle className={cls} />
-}
+

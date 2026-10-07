@@ -25,7 +25,7 @@ export default function FloatingChatbot() {
     if (isOpen && messages.length === 0) {
       setMessages([{
         role: 'bot',
-        content: '👋 Hello! I\'m your AgroGuard AI Assistant.\n\nI can help you with:\n\n🔐 **Account Help** - Login, registration & profile\n🌱 **Crop Diseases** - Information about tomato, potato & pepper diseases\n💊 **Treatment & Prevention** - How to treat and prevent diseases\n🚜 **Farming Tips** - Watering, fertilization, pest control\n📸 **System Guide** - How to use the detection system\n🌤️ **Weather Advice** - Location-based farming guidance\n\nHow can I help you today?',
+        content: '👋 Hello! I\'m your AgroGuard AI Assistant.\n\nI can help you with:\n\n🔐 **Account Help** - Login, registration & profile\n🌱 **Crop Diseases** - Information about tomato, potato & pepper diseases\n💊 **Treatment & Prevention** - How to treat and prevent diseases\n🚜 **Farming Tips** - Watering, fertilization, pest control\n📸 **System Guide** - How to use the detection system\n\nHow can I help you today?',
         timestamp: new Date().toISOString(),
         suggestions: [
           'How do I login?',

@@ -185,7 +185,7 @@ FAQ = {
     },
     "how_to_use": {
         "keywords": ["how use", "how work", "detect", "upload", "detection"],
-        "answer": "**How to Use Disease Detection:**\n\n1. **Login** to your account\n2. Go to **'Disease Detection'** page from sidebar\n3. **Take or upload** a clear photo of the affected leaf\n4. Click **'Analyze Image'** button\n5. Get instant results with:\n   - Disease diagnosis\n   - Confidence score\n   - Treatment recommendations\n   - Weather-based advice\n\nTip: Take photos in good lighting for best results!"
+        "answer": "**How to Use Disease Detection:**\n\n1. **Login** to your account\n2. Go to **'Disease Detection'** page from sidebar\n3. **Take or upload** a clear photo of the affected leaf\n4. Click **'Analyze Image'** button\n5. Get instant results with:\n   - Disease diagnosis\n   - Confidence score\n   - Treatment recommendations\n\nTip: Take photos in good lighting for best results!"
     },
     "accuracy": {
         "keywords": ["accurate", "accuracy", "reliable", "trust", "confidence"],
@@ -198,10 +198,6 @@ FAQ = {
     "cost": {
         "keywords": ["cost", "price", "free", "payment", "charge", "money"],
         "answer": "AgroGuard AI is **completely FREE** for farmers! 🎉\n\nNo hidden charges, no subscription fees. Our mission is to help farmers protect their crops and increase yields using AI technology. Just create an account and start detecting!"
-    },
-    "weather": {
-        "keywords": ["weather", "temperature", "humidity", "rain", "climate"],
-        "answer": "We integrate **real-time weather data** to give you location-specific advice. Many diseases spread faster in certain weather conditions (high humidity, cool/warm temps), so we alert you to risks and provide preventive recommendations based on your local weather."
     }
 }
 

@@ -108,7 +108,6 @@ npm run dev
 ✅ Crop disease detection (upload leaf images)  
 ✅ Kannada voice assistant (Hey Agri)  
 ✅ Text chatbot for farming questions  
-✅ Weather information  
 ✅ Treatment recommendations  
 
 ---

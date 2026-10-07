@@ -112,7 +112,7 @@ Assistant: "ನಿಮ್ಮ ಚಿತ್ರದಲ್ಲಿ AI ಗುರುತಿ
 - [x] Disease detection explanation
 - [x] Result interpretation
 - [x] History navigation
-- [x] Weather information
+- [x] Treatment information
 - [x] Profile management
 - [x] Logout process
 
@@ -120,7 +120,7 @@ Assistant: "ನಿಮ್ಮ ಚಿತ್ರದಲ್ಲಿ AI ಗುರುತಿ
 - [x] Current page detection
 - [x] Login status
 - [x] Last prediction result
-- [x] Weather data
+- [x] Page context
 - [x] Smart contextual responses
 
 ### ✅ User Experience

@@ -21,17 +21,18 @@ A professional, modern frontend for the AgroGuard AI crop disease detection syst
 - Real-time camera capture
 - Instant disease prediction
 - Confidence scores
-
-🌦️ **Weather Integration**
-- Location-based weather data
-- Disease risk assessment
-- Temperature, humidity, wind speed display
+- Treatment recommendations
 
 📊 **Analytics & Reports**
 - Scan history and statistics
 - Disease distribution charts
 - PDF report generation
 - Performance metrics
+
+🎤 **Voice Assistant**
+- Kannada language support (Hey Agri)
+- Context-aware responses
+- Speech recognition and synthesis
 
 ## Installation
 
@@ -66,9 +67,10 @@ frontend-react/
 │   │   └── Dashboard.jsx         # Main app
 │   ├── components/
 │   │   ├── PrivateRoute.jsx      # Route protection
-│   │   ├── WeatherCard.jsx       # Weather display
 │   │   ├── PredictionCard.jsx    # Disease results
-│   │   └── AnalyticsChart.jsx    # Statistics
+│   │   ├── AnalyticsChart.jsx    # Statistics
+│   │   ├── FloatingChatbot.jsx   # Farming chatbot
+│   │   └── HeyAgriVoiceAssistant.jsx  # Voice assistant
 │   ├── App.jsx                   # Main app component
 │   ├── main.jsx                  # Entry point
 │   └── index.css                 # Global styles
@@ -122,9 +124,8 @@ VITE_API_URL=http://localhost:5000
 - **Detection Tab**:
   - Image upload area
   - Camera capture
-  - Location input
   - Real-time prediction
-  - Weather information
+  - Treatment recommendations
   - PDF report download
 
 - **Analytics Tab**:
@@ -134,10 +135,11 @@ VITE_API_URL=http://localhost:5000
   - Performance metrics
 
 ### 4. Components
-- **WeatherCard**: Displays weather with disease risk
 - **PredictionCard**: Shows disease detection results
 - **AnalyticsChart**: Statistics and charts
 - **PrivateRoute**: Protects authenticated routes
+- **FloatingChatbot**: Intelligent farming assistant
+- **HeyAgriVoiceAssistant**: Kannada voice interface
 
 ## Usage
 
@@ -152,9 +154,9 @@ VITE_API_URL=http://localhost:5000
 
 ### 3. Dashboard
 - Upload crop image or use camera
-- Enter location for weather data
-- View prediction results
+- View prediction results with treatment details
 - Download PDF report
+- Access voice assistant and chatbot
 
 ### 4. Analytics
 - View scan statistics
@@ -167,11 +169,19 @@ The frontend expects these endpoints from the backend:
 
 ```
 POST /api/predict
-- Input: image file, city name
-- Output: disease, confidence, weather, treatment
+- Input: image file
+- Output: disease, confidence, treatment, symptoms
 
 GET /api/health
 - Output: server status, model info
+
+POST /api/chatbot/message
+- Input: user message
+- Output: bot response with suggestions
+
+POST /api/voice/process
+- Input: voice transcript with context
+- Output: Kannada response
 ```
 
 ## Styling

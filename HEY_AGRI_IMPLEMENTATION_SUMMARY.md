@@ -133,7 +133,7 @@
 | Disease Detection | ✅ 100% |
 | Result Interpretation | ✅ 100% |
 | History | ✅ 100% |
-| Weather | ✅ 100% |
+| Treatment | ✅ 100% |
 | Profile | ✅ 100% |
 | Context Awareness | ✅ 100% |
 
@@ -173,7 +173,7 @@
 │              FLASK BACKEND                              │
 │  voice_assistant.py                                     │
 │  • Parse Kannada query                                 │
-│  • Check context (page, prediction, weather)           │
+│  • Check context (page, prediction)                    │
 │  • Generate Kannada response                           │
 │  • Fallback to chatbot if needed                       │
 └─────────────────────┬──────────────────────────────────┘
@@ -252,7 +252,7 @@
 ### 3. Context-Aware Responses ✅
 - Knows current page
 - Access to prediction results
-- Weather data integration
+- Treatment recommendations
 - Login status awareness
 
 ### 4. Complete Application Coverage ✅
@@ -266,7 +266,7 @@
 - Result interpretation
 - Confidence score explanation
 - History access
-- Weather information
+- Treatment information
 - Profile management
 - Logout process
 

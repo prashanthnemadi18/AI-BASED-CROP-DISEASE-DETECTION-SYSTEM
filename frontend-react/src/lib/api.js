@@ -69,10 +69,9 @@ export const clearDetections = () => call('delete', '/api/detections')
 
 /* ------------------------------ Prediction ------------------------------ */
 
-export async function predictDisease(file, city) {
+export async function predictDisease(file) {
   const formData = new FormData()
   formData.append('image', file)
-  formData.append('city', city || 'New Delhi')
   return call('post', '/api/predict', { formData })
 }
 

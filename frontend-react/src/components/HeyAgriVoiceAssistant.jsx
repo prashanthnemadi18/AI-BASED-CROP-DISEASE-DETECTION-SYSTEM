@@ -313,16 +313,6 @@ export default function HeyAgriVoiceAssistant() {
       console.error('Failed to get prediction context:', e)
     }
 
-    // Try to get weather data
-    try {
-      const weatherData = localStorage.getItem('currentWeather')
-      if (weatherData) {
-        context.weather = JSON.parse(weatherData)
-      }
-    } catch (e) {
-      console.error('Failed to get weather context:', e)
-    }
-
     return context
   }
 

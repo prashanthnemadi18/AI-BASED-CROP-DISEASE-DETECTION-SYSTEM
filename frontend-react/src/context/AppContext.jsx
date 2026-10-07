@@ -18,7 +18,6 @@ function enrich(record = {}) {
     status: record.status || getStatus(disease),
     prevention: record.prevention?.length ? record.prevention : getPreventionTips(disease),
     treatment: record.treatment || [],
-    weatherAdvice: record.weatherAdvice || [],
     timestamp: record.timestamp || record.createdAt || new Date().toISOString(),
   }
 }
@@ -120,7 +119,6 @@ export function AppProvider({ children }) {
   const savePrediction = useCallback(async (raw, imageDataUrl) => {
     const local = enrich({
       ...raw,
-      weatherAdvice: raw.weather_advice,
       imageDataUrl,
       timestamp: new Date().toISOString(),
     })

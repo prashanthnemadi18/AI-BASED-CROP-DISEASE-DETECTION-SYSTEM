@@ -25,7 +25,7 @@ KANNADA_RESPONSES = {
         "details": "ನಿಮಗೆ ಹೆಸರು, email address ಮತ್ತು ಕನಿಷ್ಠ 6 ಅಕ್ಷರಗಳ password ಬೇಕಾಗುತ್ತದೆ."
     },
     "dashboard": {
-        "info": "Dashboard ನಲ್ಲಿ ನೀವು disease detection, prediction history, weather ಮತ್ತು ನಿಮ್ಮ profile ಸೇರಿದಂತೆ ಮುಖ್ಯ ಆಯ್ಕೆಗಳನ್ನು ನೋಡಬಹುದು.",
+        "info": "Dashboard ನಲ್ಲಿ ನೀವು disease detection, prediction history ಮತ್ತು ನಿಮ್ಮ profile ಸೇರಿದಂತೆ ಮುಖ್ಯ ಆಯ್ಕೆಗಳನ್ನು ನೋಡಬಹುದು.",
         "navigate": "Sidebar ನಲ್ಲಿ menu ಇದೆ. ಅಲ್ಲಿಂದ ನೀವು ಯಾವುದೇ ಪುಟಕ್ಕೆ ಹೋಗಬಹುದು."
     },
     "upload": {
@@ -53,11 +53,6 @@ KANNADA_RESPONSES = {
     "history": {
         "view": "ನಿಮ್ಮ ಹಿಂದಿನ disease predictions ಅನ್ನು Prediction History ವಿಭಾಗದಲ್ಲಿ ನೋಡಬಹುದು. Sidebar ನಲ್ಲಿ History ಆಯ್ಕೆ ಒತ್ತಿ.",
         "clear": "History ಅನ್ನು clear ಮಾಡಲು History page ನಲ್ಲಿ Clear All button ಇದೆ."
-    },
-    "weather": {
-        "view": "Weather information ನೋಡಲು Dashboard ನಲ್ಲಿ Weather section ಇದೆ. ನಿಮ್ಮ ಸ್ಥಳದ temperature, humidity ಮತ್ತು conditions ತೋರಿಸುತ್ತದೆ.",
-        "importance": "Weather information ಮುಖ್ಯ. ಏಕೆಂದರೆ ಅನೇಕ diseases humidity ಮತ್ತು temperature ಆಧಾರದ ಮೇಲೆ ಹರಡುತ್ತವೆ.",
-        "unavailable": "ಈಗ weather information ಲಭ್ಯವಿಲ್ಲ. ದಯವಿಟ್ಟು ಸ್ವಲ್ಪ ಸಮಯದ ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
     },
     "profile": {
         "view": "ನಿಮ್ಮ profile ನೋಡಲು Sidebar ನಲ್ಲಿ Profile ಆಯ್ಕೆ ಒತ್ತಿ. ಅಲ್ಲಿ ನೀವು ನಿಮ್ಮ ಹೆಸರು ಮತ್ತು email information ನೋಡಬಹುದು.",
@@ -157,12 +152,6 @@ class KannadaVoiceAssistant:
         if any(word in query_lower for word in ["history", "ಹಿಂದಿನ", "previous", "past"]):
             return self._history_help()
         
-        # Check for weather
-        if any(word in query_lower for word in ["weather", "ಹವಾಮಾನ", "temperature", "humidity"]):
-            if context and context.get("weather"):
-                return self._weather_info(context["weather"])
-            return self._weather_help()
-        
         # Check for profile
         if any(word in query_lower for word in ["profile", "ಪ್ರೊಫೈಲ್", "account"]):
             return self._profile_help()
@@ -202,8 +191,7 @@ class KannadaVoiceAssistant:
             "suggestions": [
                 "ನಾನು ಹೇಗೆ login ಮಾಡಬೇಕು?",
                 "Photo upload ಹೇಗೆ ಮಾಡೋದು?",
-                "ಯಾವ diseases detect ಮಾಡಬಹುದು?",
-                "Weather ಹೇಗಿದೆ?"
+                "ಯಾವ diseases detect ಮಾಡಬಹುದು?"
             ],
             "type": "greeting"
         }
@@ -334,39 +322,6 @@ class KannadaVoiceAssistant:
             "type": "help"
         }
     
-    def _weather_info(self, weather: Dict) -> Dict:
-        """Weather information in Kannada"""
-        temp = weather.get("temperature", "N/A")
-        humidity = weather.get("humidity", "N/A")
-        desc = weather.get("description", "N/A")
-        
-        response = f"ಈಗಿನ ಹವಾಮಾನ:\n"
-        response += f"Temperature: {temp}°C\n"
-        response += f"Humidity: {humidity}%\n"
-        response += f"Condition: {desc}\n\n"
-        response += KANNADA_RESPONSES["weather"]["importance"]
-        
-        return {
-            "response": response,
-            "language": "kn",
-            "suggestions": [
-                "Weather ಆಧಾರದ advice ಏನು?",
-                "Dashboard ಗೆ ಹೋಗೋದು ಹೇಗೆ?"
-            ],
-            "type": "weather_info"
-        }
-    
-    def _weather_help(self) -> Dict:
-        """Weather help in Kannada"""
-        return {
-            "response": KANNADA_RESPONSES["weather"]["view"] + "\n\n" + KANNADA_RESPONSES["weather"]["importance"],
-            "language": "kn",
-            "suggestions": [
-                "Dashboard ಎಲ್ಲಿದೆ?",
-                "Weather unavailable ಆಗಿದ್ದರೆ?"
-            ],
-            "type": "help"
-        }
     
     def _profile_help(self) -> Dict:
         """Profile help in Kannada"""
@@ -520,7 +475,6 @@ if __name__ == "__main__":
         ("ನಾನು ಹೇಗೆ login ಮಾಡಬೇಕು?", None),
         ("Photo upload ಹೇಗೆ ಮಾಡೋದು?", None),
         ("ಇದು ಏನು?", {"prediction": {"disease": "Tomato_Early_blight", "confidence": 92.5}}),
-        ("Weather ಹೇಗಿದೆ?", {"weather": {"temperature": 28, "humidity": 75, "description": "Partly cloudy"}}),
     ]
     
     for query, context in test_queries:

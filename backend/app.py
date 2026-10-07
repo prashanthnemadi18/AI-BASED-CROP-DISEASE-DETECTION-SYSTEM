@@ -243,11 +243,7 @@ chatbot = FarmingChatbot()
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "jfif"}
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
-# Weather configuration. Open-Meteo is keyless; OPENWEATHER_API_KEY is kept for
-# optional OpenWeatherMap use. All values can be overridden via backend/.env.
-OPENWEATHER_API_KEY = os.environ.get("OPENWEATHER_API_KEY", "")
-GEOCODING_API_URL = os.environ.get("GEOCODING_API_URL", "https://geocoding-api.open-meteo.com/v1/search")
-WEATHER_API_URL = os.environ.get("WEATHER_API_URL", "https://api.open-meteo.com/v1/forecast")
+# Weather feature removed as per project requirements
 
 
 def allowed_file(filename):
@@ -269,7 +265,7 @@ def get_current_user():
 
 DETECTION_FIELDS = (
     "crop", "disease", "confidence", "severity", "status", "description",
-    "symptoms", "treatment", "prevention", "weather", "weatherAdvice", "imageDataUrl",
+    "symptoms", "treatment", "prevention", "imageDataUrl",
 )
 
 
@@ -290,84 +286,6 @@ def preprocess_image(img_path):
     except Exception as e:
         logger.error(f"Error preprocessing image: {str(e)}")
         raise
-
-
-def get_weather(city: str):
-    """Get weather data from Open-Meteo (free, no API key needed)"""
-    try:
-        # First, get coordinates from city name
-        geocoding_url = f"{GEOCODING_API_URL}?name={city}&count=1&language=en&format=json"
-        geo_response = requests.get(geocoding_url, timeout=5)
-        geo_data = geo_response.json()
-        
-        if not geo_data.get('results'):
-            return {
-                "city": city,
-                "temperature": "N/A",
-                "humidity": "N/A",
-                "wind_speed": "N/A",
-                "description": "City not found",
-                "icon": "01d",
-            }
-        
-        location = geo_data['results'][0]
-        latitude = location['latitude']
-        longitude = location['longitude']
-        
-        # Get weather data
-        weather_url = f"{WEATHER_API_URL}?latitude={latitude}&longitude={longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto"
-        weather_response = requests.get(weather_url, timeout=5)
-        weather_data = weather_response.json()
-        
-        current = weather_data['current']
-        
-        # Map weather codes to descriptions
-        weather_codes = {
-            0: "Clear sky",
-            1: "Mainly clear",
-            2: "Partly cloudy",
-            3: "Overcast",
-            45: "Foggy",
-            48: "Foggy",
-            51: "Light drizzle",
-            53: "Moderate drizzle",
-            55: "Dense drizzle",
-            61: "Slight rain",
-            63: "Moderate rain",
-            65: "Heavy rain",
-            71: "Slight snow",
-            73: "Moderate snow",
-            75: "Heavy snow",
-            80: "Slight rain showers",
-            81: "Moderate rain showers",
-            82: "Violent rain showers",
-            85: "Slight snow showers",
-            86: "Heavy snow showers",
-            95: "Thunderstorm",
-            96: "Thunderstorm with hail",
-            99: "Thunderstorm with hail",
-        }
-        
-        description = weather_codes.get(current['weather_code'], "Unknown")
-        
-        return {
-            "city": f"{location['name']}, {location.get('country', '')}",
-            "temperature": round(current['temperature_2m'], 1),
-            "humidity": current['relative_humidity_2m'],
-            "wind_speed": round(current['wind_speed_10m'], 1),
-            "description": description,
-            "icon": "01d",
-        }
-    except Exception as e:
-        logger.error(f"Weather API error: {e}")
-        return {
-            "city": city,
-            "temperature": "N/A",
-            "humidity": "N/A",
-            "wind_speed": "N/A",
-            "description": "Could not fetch weather data",
-            "icon": "01d",
-        }
 
 
 def predict_disease(img_path):
@@ -393,28 +311,6 @@ def predict_disease(img_path):
     except Exception as e:
         logger.error(f"Error in predict_disease: {str(e)}")
         return "Unknown_Disease", 0.0
-
-
-def generate_weather_advice(weather, disease_label):
-    advice = []
-    try:
-        temp = float(weather["temperature"])
-        humidity = float(weather["humidity"])
-
-        if humidity > 80:
-            advice.append("High humidity detected — fungal disease risk is elevated.")
-        if temp > 30:
-            advice.append("High temperature — ensure adequate irrigation.")
-        if temp < 10:
-            advice.append("Cold conditions — plant immunity may be lowered.")
-        if "blight" in disease_label.lower() and humidity > 70:
-            advice.append("Blight spreads fast in humid conditions. Act immediately.")
-    except (TypeError, ValueError):
-        pass
-
-    if not advice:
-        advice.append("Weather conditions appear favorable for crop growth.")
-    return advice
 
 
 # API Routes
@@ -603,7 +499,6 @@ def predict():
             return jsonify({"error": "No image file provided"}), 400
 
         file = request.files["image"]
-        city = request.form.get("city", "New Delhi")
 
         if file.filename == "" or not allowed_file(file.filename):
             logger.warning(f"Invalid file: {file.filename}")
@@ -656,20 +551,6 @@ def predict():
         
         # Get treatment info
         treatment_info = TREATMENTS.get(disease_label, DEFAULT_TREATMENT)
-        
-        # Get weather data
-        try:
-            weather = get_weather(city)
-        except Exception as e:
-            logger.warning(f"Weather fetch error: {str(e)}")
-            weather = {"error": "Could not fetch weather"}
-        
-        # Generate advice
-        try:
-            weather_advice = generate_weather_advice(weather, disease_label)
-        except Exception as e:
-            logger.warning(f"Weather advice error: {str(e)}")
-            weather_advice = []
 
         return jsonify({
             "success": True,
@@ -681,8 +562,6 @@ def predict():
             "description": treatment_info.get("description", ""),
             "symptoms": treatment_info.get("symptoms", ""),
             "treatment": treatment_info.get("treatment", []),
-            "weather": weather,
-            "weather_advice": weather_advice,
             "image_path": filename
         }), 200
 
