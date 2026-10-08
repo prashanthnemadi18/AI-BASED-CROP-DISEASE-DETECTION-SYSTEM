@@ -1,0 +1,13 @@
+# Files to ignore during deployment (reduce slug size)
+*.md
+*.ipynb
+frontend-react/
+archive/
+dataset/
+backend/plant_dataset/
+backend/__pycache__/
+.git/
+.vscode/
+test_*.html
+*.png
+training_curves.png
