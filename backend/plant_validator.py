@@ -27,7 +27,10 @@ def load_plant_validator():
     
     try:
         if os.path.exists(config.PLANT_VALIDATOR_PATH):
-            from tensorflow.keras.models import load_model
+            try:
+                from tensorflow.keras.models import load_model
+            except ImportError:
+                from keras.models import load_model
             plant_model = load_model(config.PLANT_VALIDATOR_PATH)
             logger.info("Plant validator model loaded successfully")
         else:
