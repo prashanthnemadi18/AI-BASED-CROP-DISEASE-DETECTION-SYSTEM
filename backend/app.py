@@ -30,7 +30,6 @@ import database as db
 import config
 import plant_validator
 from chatbot import FarmingChatbot, QUICK_QUESTIONS
-from voice_assistant import process_voice_input, KANNADA_RESPONSES
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -661,52 +660,6 @@ def chatbot_clear():
         }), 500
 
 
-@app.route("/api/voice/process", methods=["POST"])
-def voice_process():
-    """
-    Process voice input (text from browser Speech Recognition)
-    and return Kannada response
-    """
-    try:
-        data = request.get_json(silent=True) or {}
-        text = (data.get("text") or "").strip()
-        context = data.get("context", {})
-        
-        if not text:
-            return jsonify({"error": "Text is required"}), 400
-        
-        logger.info(f"Voice query: {text}")
-        
-        # Process with Kannada voice assistant
-        response = process_voice_input(text, context)
-        
-        return jsonify({
-            "success": True,
-            "text": text,
-            "response": response["response"],
-            "language": response.get("language", "kn"),
-            "suggestions": response.get("suggestions", []),
-            "type": response.get("type", "general"),
-            "timestamp": datetime.utcnow().isoformat()
-        }), 200
-        
-    except Exception as e:
-        logger.error(f"Voice processing error: {str(e)}")
-        return jsonify({
-            "success": False,
-            "error": "Failed to process voice input",
-            "message": str(e)
-        }), 500
-
-
-@app.route("/api/voice/wake-word-response", methods=["GET"])
-def wake_word_response():
-    """Get the wake word welcome response"""
-    return jsonify({
-        "success": True,
-        "response": KANNADA_RESPONSES["greeting"]["welcome"],
-        "language": "kn"
-    }), 200
 
 
 if __name__ == "__main__":
