@@ -156,6 +156,23 @@ export default function HeyAgriVoiceAssistant() {
     recognitionRef.current = recognition
     speechSynthesisRef.current = window.speechSynthesis
 
+    // Load voices (sometimes they load asynchronously)
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices()
+      console.log('Loaded voices:', voices.length)
+      if (voices.length > 0) {
+        console.log('Available voices:', voices.map(v => `${v.name} (${v.lang})`))
+      }
+    }
+    
+    // Load voices immediately
+    loadVoices()
+    
+    // Also listen for voiceschanged event (Chrome loads voices async)
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = loadVoices
+    }
+
     // Request microphone permission on init
     if (isOpen) {
       requestMicrophonePermission()
@@ -302,9 +319,42 @@ export default function HeyAgriVoiceAssistant() {
     setState(STATES.SPEAKING)
     
     const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = 'kn-IN' // Kannada
-    utterance.rate = 0.9
+    
+    // Try to find and use a Kannada voice
+    const voices = speechSynthesisRef.current.getVoices()
+    console.log('Available voices:', voices.map(v => `${v.name} (${v.lang})`))
+    
+    // Look for Kannada voice first
+    const kannadaVoice = voices.find(voice => 
+      voice.lang.startsWith('kn') || 
+      voice.lang.includes('Kannada') ||
+      voice.name.toLowerCase().includes('kannada')
+    )
+    
+    // Fallback to Hindi or Indian English
+    const hindiVoice = voices.find(voice => voice.lang.startsWith('hi'))
+    const indianEnglishVoice = voices.find(voice => voice.lang === 'en-IN')
+    
+    if (kannadaVoice) {
+      console.log('Using Kannada voice:', kannadaVoice.name)
+      utterance.voice = kannadaVoice
+      utterance.lang = kannadaVoice.lang
+    } else if (hindiVoice) {
+      console.log('Kannada voice not found. Using Hindi voice:', hindiVoice.name)
+      utterance.voice = hindiVoice
+      utterance.lang = hindiVoice.lang
+    } else if (indianEnglishVoice) {
+      console.log('Kannada/Hindi voice not found. Using Indian English:', indianEnglishVoice.name)
+      utterance.voice = indianEnglishVoice
+      utterance.lang = 'en-IN'
+    } else {
+      console.log('No Indian voice found. Using default with kn-IN setting')
+      utterance.lang = 'kn-IN'
+    }
+    
+    utterance.rate = 0.85 // Slightly slower for clarity
     utterance.pitch = 1.0
+    utterance.volume = 1.0
 
     utterance.onend = () => {
       setState(STATES.IDLE)
