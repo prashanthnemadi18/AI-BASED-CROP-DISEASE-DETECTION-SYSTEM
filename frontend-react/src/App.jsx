@@ -11,7 +11,6 @@ import AnalyticsPage from './pages/dashboard/AnalyticsPage'
 import HistoryPage from './pages/dashboard/HistoryPage'
 import ProfilePage from './pages/dashboard/ProfilePage'
 import FloatingChatbot from './components/FloatingChatbot'
-import HeyAgriVoiceAssistant from './components/HeyAgriVoiceAssistant'
 
 export default function App() {
   return (
@@ -39,9 +38,6 @@ export default function App() {
         
         {/* Global Floating Chatbot - Available on all pages */}
         <FloatingChatbot />
-        
-        {/* Hey Agri Kannada Voice Assistant - Available on all pages */}
-        <HeyAgriVoiceAssistant />
       </Router>
     </AppProvider>
   )
