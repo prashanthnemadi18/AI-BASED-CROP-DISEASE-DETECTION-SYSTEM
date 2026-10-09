@@ -29,6 +29,8 @@ export default function HeyAgriVoiceAssistant() {
   const [error, setError] = useState('')
   const [isSupported, setIsSupported] = useState(true)
   const [permissionGranted, setPermissionGranted] = useState(false)
+  const [showTextInput, setShowTextInput] = useState(false)
+  const [textQuery, setTextQuery] = useState('')
 
   const recognitionRef = useRef(null)
   const speechSynthesisRef = useRef(null)
@@ -63,7 +65,7 @@ export default function HeyAgriVoiceAssistant() {
     const recognition = new SpeechRecognition()
     recognition.continuous = false
     recognition.interimResults = false
-    recognition.lang = 'en-IN' // Changed to English-India for better compatibility
+    recognition.lang = 'en-US' // Use en-US instead of en-IN for better offline support
     recognition.maxAlternatives = 1
 
     recognition.onstart = () => {
@@ -97,14 +99,34 @@ export default function HeyAgriVoiceAssistant() {
           setTimeout(() => startWakeWordListening(), 500)
         }
       } else if (event.error === 'network') {
-        setError('Network error. Internet connection ಪರಿಶೀಲಿಸಿ.')
+        // Network error in speech recognition - Chrome needs internet
+        console.warn('Speech recognition network error - Chrome needs internet for speech-to-text')
+        
+        // Automatically show text input instead of showing error
+        setShowTextInput(true)
+        setState(STATES.IDLE)
+        setError('') // Clear error
+        
+        // Show a gentle notification instead
+        setResponse('🌐 Speech recognition ಗೆ internet ಬೇಕು.\n\n✅ Type button ಬಳಸಿ ಪ್ರಶ್ನೆ ಕೇಳಿ!')
+        
+        // Don't restart speech recognition
+        return
+      } else if (event.error === 'aborted') {
+        // Speech recognition was aborted - usually not a problem
+        console.log('Speech recognition aborted')
+        if (state === STATES.WAKE_WORD_LISTENING && isOpen) {
+          // Silently restart
+          setTimeout(() => startWakeWordListening(), 500)
+        }
+      } else if (event.error === 'audio-capture') {
+        setError('Microphone ಸಿಗುತ್ತಿಲ್ಲ. Device microphone check ಮಾಡಿ.')
         setState(STATES.ERROR)
-        setTimeout(() => {
-          setState(STATES.IDLE)
-          setError('')
-        }, 3000)
+      } else if (event.error === 'service-not-allowed') {
+        setError('Speech service blocked. Browser settings ಅಥವಾ privacy mode check ಮಾಡಿ.')
+        setState(STATES.ERROR)
       } else {
-        setError(`ಕ್ಷಮಿಸಿ, error ಆಗಿದೆ: ${event.error}. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.`)
+        setError(`ಕ್ಷಮಿಸಿ, error: ${event.error}. Page refresh ಮಾಡಿ ಮತ್ತೆ try ಮಾಡಿ.`)
         setState(STATES.ERROR)
         setTimeout(() => {
           setState(STATES.IDLE)
@@ -252,12 +274,23 @@ export default function HeyAgriVoiceAssistant() {
       }
     } catch (error) {
       console.error('Query processing error:', error)
-      setError('ಕ್ಷಮಿಸಿ, network error. Backend running ಇದೆಯೇ ಎಂದು ಪರಿಶೀಲಿಸಿ.')
+      
+      // Better error messages based on error type
+      let errorMsg = 'ಕ್ಷಮಿಸಿ, error ಆಗಿದೆ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.'
+      
+      if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+        errorMsg = '❌ Backend server ಸಿಗುತ್ತಿಲ್ಲ!\n\n📌 Solution:\n1. Backend server start ಮಾಡಿ: cd backend → python app.py\n2. Check port 5000 ಖಾಲಿ ಇದೆಯೇ'
+      } else if (error.response) {
+        // Backend responded with error
+        errorMsg = error.response.data?.error || 'Backend error. ಮತ್ತೆ try ಮಾಡಿ.'
+      }
+      
+      setError(errorMsg)
       setState(STATES.ERROR)
       setTimeout(() => {
         setState(STATES.IDLE)
         if (isOpen) startWakeWordListening()
-      }, 3000)
+      }, 5000) // Longer timeout for error messages
     }
   }
 
@@ -319,6 +352,16 @@ export default function HeyAgriVoiceAssistant() {
   const handleSuggestionClick = (suggestion) => {
     setTranscript(suggestion)
     processQuery(suggestion)
+  }
+
+  const handleTextSubmit = (e) => {
+    e.preventDefault()
+    if (textQuery.trim()) {
+      setTranscript(textQuery)
+      processQuery(textQuery)
+      setTextQuery('')
+      setShowTextInput(false)
+    }
   }
 
   const toggleAssistant = async () => {
@@ -556,6 +599,66 @@ export default function HeyAgriVoiceAssistant() {
                         >
                           🎤 ಈಗಲೇ ಮಾತನಾಡಿ
                         </button>
+                        
+                        <button
+                          onClick={() => {
+                            setShowTextInput(true)
+                            setState(STATES.IDLE)
+                          }}
+                          className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+                        >
+                          ⌨️ Type ನಲ್ಲಿ ಬರೆಯಿರಿ
+                        </button>
+                      </motion.div>
+                    )}
+
+                    {/* Text Input Mode */}
+                    {showTextInput && state !== STATES.ERROR && (
+                      <motion.div
+                        key="text-input"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="space-y-4"
+                      >
+                        <div className="text-center">
+                          <h3 className="text-xl font-bold text-gray-800 mb-2">
+                            Type Your Question
+                          </h3>
+                          <p className="text-gray-600 text-sm">
+                            ನಿಮ್ಮ ಪ್ರಶ್ನೆಯನ್ನು ಇಲ್ಲಿ type ಮಾಡಿ
+                          </p>
+                        </div>
+                        
+                        <form onSubmit={handleTextSubmit} className="space-y-3">
+                          <textarea
+                            value={textQuery}
+                            onChange={(e) => setTextQuery(e.target.value)}
+                            placeholder="Example: How to login? / ನಾನು ಹೇಗೆ register ಮಾಡಬೇಕು?"
+                            className="w-full px-4 py-3 border-2 border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm resize-none"
+                            rows="4"
+                            autoFocus
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              type="submit"
+                              disabled={!textQuery.trim()}
+                              className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
+                            >
+                              ✅ Send Question
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowTextInput(false)}
+                              className="px-4 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-all"
+                            >
+                              ✖️
+                            </button>
+                          </div>
+                        </form>
+                        
+                        <div className="text-xs text-gray-500 text-center">
+                          💡 You can ask in English or Kannada
+                        </div>
                       </motion.div>
                     )}
 
@@ -627,7 +730,7 @@ export default function HeyAgriVoiceAssistant() {
                         className="space-y-4"
                       >
                         <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                          <p className="text-sm text-red-700 mb-3">{error}</p>
+                          <p className="text-sm text-red-700 mb-3 whitespace-pre-line">{error}</p>
                           
                           {!permissionGranted && (
                             <div className="space-y-2">
@@ -659,6 +762,40 @@ export default function HeyAgriVoiceAssistant() {
                               </div>
                             </div>
                           )}
+                          
+                          {/* Text input fallback - ALWAYS show in error state */}
+                          <div className="mt-3 space-y-2">
+                            <button
+                              onClick={() => {
+                                setShowTextInput(!showTextInput)
+                                setState(STATES.IDLE) // Clear error state
+                                setError('')
+                              }}
+                              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium shadow-lg"
+                            >
+                              ⌨️ Type Your Question Instead
+                            </button>
+                            
+                            {showTextInput && (
+                              <form onSubmit={handleTextSubmit} className="space-y-2">
+                                <input
+                                  type="text"
+                                  value={textQuery}
+                                  onChange={(e) => setTextQuery(e.target.value)}
+                                  placeholder="ಇಲ್ಲಿ ನಿಮ್ಮ ಪ್ರಶ್ನೆ ಬರೆಯಿರಿ... (Type your question here)"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                  autoFocus
+                                />
+                                <button
+                                  type="submit"
+                                  disabled={!textQuery.trim()}
+                                  className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                >
+                                  ✅ Send Question
+                                </button>
+                              </form>
+                            )}
+                          </div>
                         </div>
                       </motion.div>
                     )}
